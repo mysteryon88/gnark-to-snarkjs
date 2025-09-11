@@ -71,9 +71,6 @@ func exportProof_BLS12_381(p *groth16_bls12381.Proof, publicSignals []string, w 
 
 // ---------------- BN254 ----------------
 func exportProof_BN254(p *groth16_bn254.Proof, publicSignals []string, w io.Writer) error {
-
-	fmt.Println(p.Commitments)
-	fmt.Println(p.CommitmentPok)
 	if p == nil {
 		return fmt.Errorf("proof is nil")
 	}
