@@ -55,23 +55,13 @@ func exportProof_BLS12_381(p *groth16_bls12381.Proof, publicSignals []string, w 
 		"pi_b":     g2(p.Bs),  // B
 		"pi_c":     g1(p.Krs), // C
 	}
+
 	if len(publicSignals) > 0 {
 		out["publicSignals"] = publicSignals
 	}
 
-	// optional: commits (snarkjs ignores them)
 	if len(p.Commitments) > 0 {
-		extra := struct {
-			Commitments   [][]string `json:"commitments"`
-			CommitmentPok []string   `json:"commitment_pok"`
-		}{
-			Commitments:   make([][]string, 0, len(p.Commitments)),
-			CommitmentPok: g1(p.CommitmentPok),
-		}
-		for _, c := range p.Commitments {
-			extra.Commitments = append(extra.Commitments, g1(c))
-		}
-		out["extra"] = extra
+		return fmt.Errorf("proof contains commitments, but snarkjs verifier does not support them")
 	}
 
 	enc := json.NewEncoder(w)
@@ -81,6 +71,9 @@ func exportProof_BLS12_381(p *groth16_bls12381.Proof, publicSignals []string, w 
 
 // ---------------- BN254 ----------------
 func exportProof_BN254(p *groth16_bn254.Proof, publicSignals []string, w io.Writer) error {
+
+	fmt.Println(p.Commitments)
+	fmt.Println(p.CommitmentPok)
 	if p == nil {
 		return fmt.Errorf("proof is nil")
 	}
@@ -106,21 +99,13 @@ func exportProof_BN254(p *groth16_bn254.Proof, publicSignals []string, w io.Writ
 		"pi_b":     g2(p.Bs),
 		"pi_c":     g1(p.Krs),
 	}
+
 	if len(publicSignals) > 0 {
 		out["publicSignals"] = publicSignals
 	}
+
 	if len(p.Commitments) > 0 {
-		extra := struct {
-			Commitments   [][]string `json:"commitments"`
-			CommitmentPok []string   `json:"commitment_pok"`
-		}{
-			Commitments:   make([][]string, 0, len(p.Commitments)),
-			CommitmentPok: g1(p.CommitmentPok),
-		}
-		for _, c := range p.Commitments {
-			extra.Commitments = append(extra.Commitments, g1(c))
-		}
-		out["extra"] = extra
+		return fmt.Errorf("proof contains commitments, but snarkjs verifier does not support them")
 	}
 
 	enc := json.NewEncoder(w)

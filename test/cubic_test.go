@@ -7,6 +7,7 @@ import (
 	"github.com/mysteryon88/gnark-to-snarkjs/test/cubic"
 )
 
+// go test ./test -v -run TestExportProofAndVK_BN254
 func TestExportProofAndVK_BN254(t *testing.T) {
 	CheckDirs([]string{"cubic/proofs", "cubic/keys"})
 
@@ -19,6 +20,7 @@ func TestExportProofAndVK_BN254(t *testing.T) {
 	g16.Export()
 }
 
+// go test ./test -v -run TestExportProofAndVK_BLS12_381
 func TestExportProofAndVK_BLS12_381(t *testing.T) {
 	CheckDirs([]string{"cubic/proofs", "cubic/keys"})
 
