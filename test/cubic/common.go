@@ -1,6 +1,8 @@
 package cubic
 
 import (
+	"math/big"
+
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/constraint"
@@ -12,10 +14,16 @@ const (
 
 	ProofPathG16_BLS12381 = "cubic/proofs/proof_bls12381.json"
 	VKeyPathG16_BLS12381  = "cubic/keys/verification_key_bls12381.json"
+
+	GnarkProofPathG16_BN254    = "cubic/proofs/proof_gnark_bn254.json"
+	GnarkVKeyPathG16_BN254     = "cubic/keys/verification_key_gnark_bn254.json"
+	GnarkProofPathG16_BLS12381 = "cubic/proofs/proof_gnark_bls12381.json"
+	GnarkVKeyPathG16_BLS12381  = "cubic/keys/verification_key_gnark_bls12381.json"
 )
 
 type G16 struct {
 	circuit Circuit
+	field   *big.Int
 
 	r1cs constraint.ConstraintSystem
 

@@ -58,8 +58,59 @@ func (g16 *G16) Export() error {
 	return nil
 }
 
+func (g16 *G16) ExportGnark() error {
+	var ProofPath, VKeyPath, PublicPath string
+
+	switch g16.proof.(type) {
+	case *groth16_bls12381.Proof:
+		ProofPath, VKeyPath = GnarkProofPathG16_BLS12381, GnarkVKeyPathG16_BLS12381
+	case *groth16_bn254.Proof:
+		ProofPath, VKeyPath = GnarkProofPathG16_BN254, GnarkVKeyPathG16_BN254
+	default:
+		panic("not implemented")
+	}
+
+	PublicPath = "cubic/proofs/public.json"
+
+	proofOut, err := os.Create(ProofPath)
+	if err != nil {
+		return err
+	}
+	defer proofOut.Close()
+	if err := gnarktosnarkjs.ExportGnarkProof(g16.proof, proofOut); err != nil {
+		return err
+	}
+
+	vkOut, err := os.Create(VKeyPath)
+	if err != nil {
+		return err
+	}
+	defer vkOut.Close()
+	if err := gnarktosnarkjs.ExportGnarkVerifyingKey(g16.vk, vkOut); err != nil {
+		return err
+	}
+
+	// Export public inputs to public.json
+	schema, err := frontend.NewSchema(g16.field, &g16.circuit)
+	if err != nil {
+		return err
+	}
+	publicOut, err := os.Create(PublicPath)
+	if err != nil {
+		return err
+	}
+	defer publicOut.Close()
+	if err := gnarktosnarkjs.ExportPublicWitness(g16.witnessPublic, schema, publicOut); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (g16 *G16) Compile(ScalarField *big.Int) error {
 	var err error
+	g16.field = ScalarField
 	g16.r1cs, err = frontend.Compile(ScalarField, r1cs.NewBuilder, &g16.circuit)
 	if err != nil {
 		return err
