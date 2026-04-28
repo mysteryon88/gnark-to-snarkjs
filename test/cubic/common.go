@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	ProofPathG16_BN254 = "cubic/proofs/proof_bn254.json"
-	VKeyPathG16_BN254  = "cubic/keys/verification_key_bn254.json"
-
-	ProofPathG16_BLS12381 = "cubic/proofs/proof_bls12381.json"
-	VKeyPathG16_BLS12381  = "cubic/keys/verification_key_bls12381.json"
+	ProofPathG16_BN254    = "cubic/proofs/proof_groth16_bn254.json"
+	VKeyPathG16_BN254     = "cubic/keys/verification_key_groth16_bn254.json"
+	ProofPathG16_BLS12381 = "cubic/proofs/proof_groth16_bls12381.json"
+	VKeyPathG16_BLS12381  = "cubic/keys/verification_key_groth16_bls12381.json"
 
 	GnarkProofPathG16_BN254    = "cubic/proofs/proof_gnark_bn254.json"
 	GnarkVKeyPathG16_BN254     = "cubic/keys/verification_key_gnark_bn254.json"
 	GnarkProofPathG16_BLS12381 = "cubic/proofs/proof_gnark_bls12381.json"
 	GnarkVKeyPathG16_BLS12381  = "cubic/keys/verification_key_gnark_bls12381.json"
+
 )
 
 type G16 struct {

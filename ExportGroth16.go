@@ -13,9 +13,22 @@ import (
 	curve_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 )
 
-// ExportVerifyingKey serializes the verifying key into a JSON format compatible with snarkjs
+// ExportGroth16Proof serializes a Groth16 proof into a JSON format compatible with snarkjs
 // and writes it to the provided writer.
-func ExportVerifyingKey(vk any, w io.Writer) error {
+func ExportGroth16Proof(proof any, publicSignals []string, w io.Writer) error {
+	switch p := proof.(type) {
+	case *groth16_bls12381.Proof:
+		return exportProof_BLS12_381(p, publicSignals, w)
+	case *groth16_bn254.Proof:
+		return exportProof_BN254(p, publicSignals, w)
+	default:
+		return fmt.Errorf("unsupported proof type %T (expected *groth16_{bn254,bls12-381}.Proof)", proof)
+	}
+}
+
+// ExportGroth16VerifyingKey serializes the verifying key into a JSON format compatible with snarkjs
+// and writes it to the provided writer.
+func ExportGroth16VerifyingKey(vk any, w io.Writer) error {
 	switch t := vk.(type) {
 	case *groth16_bls12381.VerifyingKey:
 		return exportVK_BLS12_381(t, w)
@@ -27,6 +40,46 @@ func ExportVerifyingKey(vk any, w io.Writer) error {
 }
 
 // ---------------- BLS12-381 ----------------
+
+func exportProof_BLS12_381(p *groth16_bls12381.Proof, publicSignals []string, w io.Writer) error {
+	if p == nil {
+		return fmt.Errorf("proof is nil")
+	}
+	g1 := func(P curve_bls12381.G1Affine) []string {
+		return []string{
+			P.X.BigInt(new(big.Int)).String(),
+			P.Y.BigInt(new(big.Int)).String(),
+			"1",
+		}
+	}
+	g2 := func(P curve_bls12381.G2Affine) [][]string {
+		return [][]string{
+			{P.X.A0.BigInt(new(big.Int)).String(), P.X.A1.BigInt(new(big.Int)).String()},
+			{P.Y.A0.BigInt(new(big.Int)).String(), P.Y.A1.BigInt(new(big.Int)).String()},
+			{"1", "0"},
+		}
+	}
+
+	out := map[string]any{
+		"protocol": "groth16",
+		"curve":    "bls12381",
+		"pi_a":     g1(p.Ar),
+		"pi_b":     g2(p.Bs),
+		"pi_c":     g1(p.Krs),
+	}
+
+	if len(publicSignals) > 0 {
+		out["publicSignals"] = publicSignals
+	}
+
+	if len(p.Commitments) > 0 {
+		return fmt.Errorf("proof contains commitments, but snarkjs verifier does not support them")
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
+}
 
 func exportVK_BLS12_381(vk *groth16_bls12381.VerifyingKey, w io.Writer) error {
 	if vk == nil {
@@ -97,6 +150,46 @@ func exportVK_BLS12_381(vk *groth16_bls12381.VerifyingKey, w io.Writer) error {
 
 // ---------------- BN254 ----------------
 
+func exportProof_BN254(p *groth16_bn254.Proof, publicSignals []string, w io.Writer) error {
+	if p == nil {
+		return fmt.Errorf("proof is nil")
+	}
+	g1 := func(P curve_bn254.G1Affine) []string {
+		return []string{
+			P.X.BigInt(new(big.Int)).String(),
+			P.Y.BigInt(new(big.Int)).String(),
+			"1",
+		}
+	}
+	g2 := func(P curve_bn254.G2Affine) [][]string {
+		return [][]string{
+			{P.X.A0.BigInt(new(big.Int)).String(), P.X.A1.BigInt(new(big.Int)).String()},
+			{P.Y.A0.BigInt(new(big.Int)).String(), P.Y.A1.BigInt(new(big.Int)).String()},
+			{"1", "0"},
+		}
+	}
+
+	out := map[string]any{
+		"protocol": "groth16",
+		"curve":    "bn254",
+		"pi_a":     g1(p.Ar),
+		"pi_b":     g2(p.Bs),
+		"pi_c":     g1(p.Krs),
+	}
+
+	if len(publicSignals) > 0 {
+		out["publicSignals"] = publicSignals
+	}
+
+	if len(p.Commitments) > 0 {
+		return fmt.Errorf("proof contains commitments, but snarkjs verifier does not support them")
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
+}
+
 func exportVK_BN254(vk *groth16_bn254.VerifyingKey, w io.Writer) error {
 	if vk == nil {
 		return fmt.Errorf("verifying key is nil")
@@ -162,4 +255,14 @@ func exportVK_BN254(vk *groth16_bn254.VerifyingKey, w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
+}
+
+// ExportProof is an alias for ExportGroth16Proof for backward compatibility.
+func ExportProof(proof any, publicSignals []string, w io.Writer) error {
+	return ExportGroth16Proof(proof, publicSignals, w)
+}
+
+// ExportVerifyingKey is an alias for ExportGroth16VerifyingKey for backward compatibility.
+func ExportVerifyingKey(vk any, w io.Writer) error {
+	return ExportGroth16VerifyingKey(vk, w)
 }
