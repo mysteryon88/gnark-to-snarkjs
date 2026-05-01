@@ -17,10 +17,13 @@ function loadJson(p: string): any {
   const paths = [
     resolve(__dirname, p),
     resolve(__dirname, "cubic", p),
+    resolve(__dirname, "..", "test", "cubic", p),
     resolve(__dirname, "..", "cubic", p),
     resolve(__dirname, "..", p),
     resolve(__dirname, "keys", p.split("/").pop()!),
     resolve(__dirname, "proofs", p.split("/").pop()!),
+    resolve(__dirname, "..", "test", "cubic", "keys", p.split("/").pop()!),
+    resolve(__dirname, "..", "test", "cubic", "proofs", p.split("/").pop()!),
     resolve(__dirname, "..", "keys", p.split("/").pop()!),
     resolve(__dirname, "..", "proofs", p.split("/").pop()!),
   ];
