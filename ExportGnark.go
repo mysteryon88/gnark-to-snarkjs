@@ -2,6 +2,7 @@ package gnarktosnarkjs
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/consensys/gnark/backend/witness"
@@ -34,11 +35,45 @@ func ExportPublicWitness(witness witness.Witness, s *schema.Schema, w io.Writer)
 	return err
 }
 
+// ExportGnarkVerifyingKeyBinary serializes the verifying key to gnark's native
+// binary format via io.WriterTo and writes it to w.
+func ExportGnarkVerifyingKeyBinary(vk any, w io.Writer) error {
+	return exportBinary("verifying key", vk, w)
+}
+
+// ExportGnarkProofBinary serializes the proof to gnark's native binary format
+// via io.WriterTo and writes it to w.
+func ExportGnarkProofBinary(proof any, w io.Writer) error {
+	return exportBinary("proof", proof, w)
+}
+
+// ExportPublicWitnessBinary serializes the witness to gnark's native binary
+// format and writes it to w.
+func ExportPublicWitnessBinary(witness witness.Witness, w io.Writer) error {
+	if witness == nil {
+		return fmt.Errorf("witness is nil")
+	}
+	_, err := witness.WriteTo(w)
+	return err
+}
+
 func exportJSON(v any, w io.Writer) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
 	_, err = w.Write(data)
+	return err
+}
+
+func exportBinary(name string, v any, w io.Writer) error {
+	if w == nil {
+		return fmt.Errorf("writer is nil")
+	}
+	writerTo, ok := v.(io.WriterTo)
+	if !ok {
+		return fmt.Errorf("%s type %T does not implement io.WriterTo", name, v)
+	}
+	_, err := writerTo.WriteTo(w)
 	return err
 }

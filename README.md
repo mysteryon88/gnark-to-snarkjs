@@ -5,7 +5,7 @@
 Utilities for exporting **[gnark](https://github.com/ConsenSys/gnark)** proofs and verifying keys:
 
 - **snarkjs format** — JSON compatible with [snarkjs](https://github.com/iden3/snarkjs) (`ExportProof`, `ExportVerifyingKey`).
-- **gnark native format** — JSON from gnark structs (`ExportGnarkProof`, `ExportGnarkVerifyingKey`, `ExportPublicWitness`); suitable for [Garaga](https://garaga.gitbook.io/garaga/smart-contract-generators/groth16/generate-and-deploy-your-verifier-contract) and other tools that accept gnark’s native JSON.
+- **gnark native format** — JSON and binary from gnark structs (`ExportGnarkProof`, `ExportGnarkVerifyingKey`, `ExportPublicWitness`, plus the `*Binary` variants); suitable for [Garaga](https://garaga.gitbook.io/garaga/smart-contract-generators/groth16/generate-and-deploy-your-verifier-contract) and other tools that accept gnark’s native formats.
 
 Supports **Groth16** on curves **BN254** and **BLS12-381**.
 
@@ -51,6 +51,19 @@ err = gnarktosnarkjs.ExportGnarkVerifyingKey(vk, vkOut)
 schema, _ := frontend.NewSchema(field, &circuit)
 publicOut, _ := os.Create("public.json")
 err = gnarktosnarkjs.ExportPublicWitness(publicWitness, schema, publicOut)
+```
+
+Export the same objects as gnark native binary using gnark's `WriteTo` serialization:
+
+```go
+proofBinOut, _ := os.Create("proof_gnark.bin")
+err = gnarktosnarkjs.ExportGnarkProofBinary(proof, proofBinOut)
+
+vkBinOut, _ := os.Create("vk_gnark.bin")
+err = gnarktosnarkjs.ExportGnarkVerifyingKeyBinary(vk, vkBinOut)
+
+publicBinOut, _ := os.Create("public.bin")
+err = gnarktosnarkjs.ExportPublicWitnessBinary(publicWitness, publicBinOut)
 ```
 
 ## Supported curves
