@@ -2,6 +2,8 @@ package gnarktosnarkjs
 
 import (
 	"bytes"
+	"encoding/binary"
+	"encoding/json"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
@@ -20,6 +22,45 @@ func (c *testCircuit) Define(api frontend.API) error {
 	x3 := api.Mul(c.X, c.X, c.X)
 	api.AssertIsEqual(api.Add(x3, c.X, 5), c.Y)
 	return nil
+}
+
+func TestExportPublicWitnessExcludesSecretValues(t *testing.T) {
+	field := ecc.BN254.ScalarField()
+	fullWitness, err := frontend.NewWitness(&testCircuit{X: 3, Y: 35}, field)
+	if err != nil {
+		t.Fatalf("full witness: %v", err)
+	}
+	s, err := frontend.NewSchema(field, &testCircuit{})
+	if err != nil {
+		t.Fatalf("schema: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := ExportPublicWitness(fullWitness, s, &out); err != nil {
+		t.Fatalf("export public witness: %v", err)
+	}
+	var values map[string]json.RawMessage
+	if err := json.Unmarshal(out.Bytes(), &values); err != nil {
+		t.Fatalf("decode public witness: %v", err)
+	}
+	if _, ok := values["X"]; ok {
+		t.Fatal("exported secret field X")
+	}
+	if len(values) != 1 || string(values["Y"]) != "35" {
+		t.Fatalf("unexpected public witness: %s", out.Bytes())
+	}
+
+	publicWitness, err := fullWitness.Public()
+	if err != nil {
+		t.Fatalf("public witness: %v", err)
+	}
+	var publicOut bytes.Buffer
+	if err := ExportPublicWitness(publicWitness, s, &publicOut); err != nil {
+		t.Fatalf("export already-public witness: %v", err)
+	}
+	if !bytes.Equal(out.Bytes(), publicOut.Bytes()) {
+		t.Fatalf("full and public witness exports differ: %s != %s", out.Bytes(), publicOut.Bytes())
+	}
 }
 
 func TestExportGnarkBinaryRoundTripBN254(t *testing.T) {
@@ -68,8 +109,18 @@ func TestExportGnarkBinaryRoundTripBN254(t *testing.T) {
 	}
 
 	var publicWitnessOut bytes.Buffer
-	if err := ExportPublicWitnessBinary(publicWitness, &publicWitnessOut); err != nil {
+	if err := ExportPublicWitnessBinary(fullWitness, &publicWitnessOut); err != nil {
 		t.Fatalf("export public witness binary: %v", err)
+	}
+	if got := publicWitnessOut.Bytes(); len(got) < 12 || binary.BigEndian.Uint32(got[0:4]) != 1 || binary.BigEndian.Uint32(got[4:8]) != 0 || binary.BigEndian.Uint32(got[8:12]) != 1 {
+		t.Fatalf("public witness binary contains unexpected counts: %x", got)
+	}
+	var alreadyPublicOut bytes.Buffer
+	if err := ExportPublicWitnessBinary(publicWitness, &alreadyPublicOut); err != nil {
+		t.Fatalf("export already-public witness binary: %v", err)
+	}
+	if !bytes.Equal(publicWitnessOut.Bytes(), alreadyPublicOut.Bytes()) {
+		t.Fatal("full and public witness binary exports differ")
 	}
 	restoredPublicWitness, err := witness.New(field)
 	if err != nil {

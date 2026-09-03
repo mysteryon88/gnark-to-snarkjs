@@ -27,7 +27,11 @@ func ExportGnarkProof(proof any, w io.Writer) error {
 // schema must be created via frontend.NewSchema(field, circuit).
 // Call this when exporting proof to also save public inputs/outputs (e.g. for Garaga).
 func ExportPublicWitness(witness witness.Witness, s *schema.Schema, w io.Writer) error {
-	data, err := witness.ToJSON(s)
+	publicWitness, err := witness.Public()
+	if err != nil {
+		return err
+	}
+	data, err := publicWitness.ToJSON(s)
 	if err != nil {
 		return err
 	}
@@ -53,7 +57,11 @@ func ExportPublicWitnessBinary(witness witness.Witness, w io.Writer) error {
 	if witness == nil {
 		return fmt.Errorf("witness is nil")
 	}
-	_, err := witness.WriteTo(w)
+	publicWitness, err := witness.Public()
+	if err != nil {
+		return err
+	}
+	_, err = publicWitness.WriteTo(w)
 	return err
 }
 
